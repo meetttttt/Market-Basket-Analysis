@@ -1,42 +1,57 @@
+"""
+This file is used to perform the market basket analysis using mlxtend library.
+We will use the dummy data we created.
+We will also create a function to test it on unseen data.
+"""
+
+# Imports are written here
 import joblib
 import pandas as pd
 
 from mlxtend.frequent_patterns import apriori, association_rules
 
-loaded_te = joblib.load('transaction_encoder.joblib')
+try:
 
-data = pd.read_csv("Data/dummyData.csv")
-print(data)
+    # Loading the TransactionalEncoder
+    loaded_te = joblib.load('transaction_encoder.joblib')
 
-# Find frequent items using Apriori
-frequent_itemsets = apriori(data, min_support=0.01, use_colnames=True)
+    # Loading the dummydata
+    data = pd.read_csv("Data/dummyData.csv")
 
-# Generate association rules
-rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=0.5)
+    # Find frequent items using Apriori
+    frequent_item = apriori(data, min_support=0.01, use_colnames=True)
 
-print("Frequent Itemsets:")
-print(frequent_itemsets)
+    # Generate association rules
+    rules = association_rules(frequent_item, metric="confidence", min_threshold=0.5)
 
-print("\nAssociation Rules:")
-print(rules)
+    # Displaying the Frequent Item
+    print("Frequent Item:")
+    print(frequent_item)
 
-# Convert the unseen data to the format required by mlxtend
-unseen_data = ['Milk', 'Bread']
-te_unseen_ary = loaded_te.transform([unseen_data])
-df_unseen = pd.DataFrame(te_unseen_ary, columns=loaded_te.columns_)
+    # Displaying the Association Rules
+    print("\nAssociation Rules:")
+    print(rules)
 
-# Identify relevant rules for the new data
-filtered_rules = rules[rules['antecedents'].apply(lambda x: set(unseen_data).issubset(set(x)))]
+    # Convert the unseen data to the format required by mlxtend
+    unseen_data = ['Milk', 'Bread']
+    te_unseen_ary = loaded_te.transform([unseen_data])
+    df_unseen = pd.DataFrame(te_unseen_ary, columns=loaded_te.columns_)
 
-# Create a dictionary in the specified format
-output_dict = {'response': {}}
+    # Identify relevant rules for the new data
+    filtered_rules = rules[rules['antecedents'].apply(lambda x: set(unseen_data).issubset(set(x)))]
 
-# Populate the dictionary with suggested items and scores
-for _, rule in filtered_rules.iterrows():
-    antecedent = ', '.join(rule['antecedents'])
-    consequent = ', '.join(rule['consequents'])
-    score = rule['confidence']
-    output_dict['response'][f"{antecedent} -> {consequent}"] = score
+    # Create a dictionary in the specified format
+    output_dict = {'response': {}}
 
-# Display the output dictionary
-print(output_dict)
+    # Populate the dictionary with suggested items and scores
+    for _, rule in filtered_rules.iterrows():
+        antecedent = ', '.join(rule['antecedents'])
+        consequent = ', '.join(rule['consequents'])
+        score = rule['confidence']
+        output_dict['response'][f"{antecedent} -> {consequent}"] = score
+
+    # Display the output dictionary
+    print(output_dict)
+
+except Exception as e:
+    print(f"Error occurred: {e}")
